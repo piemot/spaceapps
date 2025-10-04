@@ -1,21 +1,34 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Asteroid Impact Lab — Pro</title>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Asteroid Impact Lab</title>
 
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="stylesheet" href="/static/vendor/leaflet.css" />
-</head>
-<body>
-  <header>
-    <h1>Asteroid Impact Lab <span class="tag">Pro</span></h1>
-    <p class="sub">Educational prototype — not an operational hazard tool</p>
-  </header>
+        <link rel="stylesheet" href="/styles.css" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <!--<header>
+            <h1>Asteroid Impact Lab</h1>
+        </header>-->
+        <main>
+            <section></section>
+            <section class="viz">
+                <div class="three-wrap">
+                    <canvas id="three"></canvas>
+                </div>
+            </section>
+        </main>
 
-  <div id="banner">Graphics libs missing (local /static/vendor). Follow README to download Leaflet & Three locally.</div>
-
+        <!--
   <main class="grid">
     <section class="panel">
       <h2>NEO & Scenario</h2>
@@ -106,19 +119,9 @@
   <footer>
     <div>© Asteroid Impact Lab — Pro</div>
     <div class="right"><a href="https://api.nasa.gov/" target="_blank" rel="noreferrer">NASA APIs</a> · <a href="https://www.usgs.gov/" target="_blank" rel="noreferrer">USGS</a></div>
-  </footer>
+  </footer> -->
 
-  <!-- Load local libs only (no CDN) -->
-  <script src="/static/vendor/leaflet.js"></script>
-  <script src="/static/vendor/three.min.js"></script>
-  <script>
-    // Show banner if any lib is missing
-    window.addEventListener('load', () => {
-      if (typeof L === 'undefined' || typeof THREE === 'undefined') {
-        const b = document.getElementById('banner'); if (b) b.style.display = 'block';
-      }
-    });
-  </script>
-  <script src="/app.js"></script>
-</body>
+        <!--<script src="/static/vendor/three.min.js"></script>-->
+        <script type="module" src="/app.js"></script>
+    </body>
 </html>
