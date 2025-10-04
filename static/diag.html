@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Diagnostics</title>
+<link rel="stylesheet" href="/static/vendor/leaflet.css">
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/vendor/three.min.js"></script>
+<pre id="out"></pre>
+<script>
+  const o = document.getElementById('out');
+  o.textContent = [
+    'Leaflet L:', typeof L,
+    '\nTHREE:', typeof THREE
+  ].join(' ');
+</script>

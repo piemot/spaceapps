@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Asteroid Impact Lab — Pro</title>
+
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/static/vendor/leaflet.css" />
+</head>
+<body>
+  <header>
+    <h1>Asteroid Impact Lab <span class="tag">Pro</span></h1>
+    <p class="sub">Educational prototype — not an operational hazard tool</p>
+  </header>
+
+  <div id="banner">Graphics libs missing (local /static/vendor). Follow README to download Leaflet & Three locally.</div>
+
+  <main class="grid">
+    <section class="panel">
+      <h2>NEO & Scenario</h2>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input id="neoSearch" placeholder="Filter list by name..." style="flex:1;" />
+        <button id="browseBtn">Browse NASA</button>
+      </div>
+      <div id="neoList" class="list"></div>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <button id="loadDemoBtn">Load Impactor-2025 (demo)</button>
+      </div>
+      <div id="neoMeta" class="note" style="margin-top:8px;">No NEO loaded yet.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Inputs</h2>
+      <label>Diameter (m)
+        <input id="diameter" type="number" min="10" max="3000" step="1" value="120" />
+      </label>
+      <label>Speed (km/s)
+        <input id="speed" type="number" min="5" max="72" step="0.5" value="18" />
+      </label>
+      <label>Density (kg/m³)
+        <input id="density" type="number" step="10" value="3000" />
+      </label>
+      <label>Impact Angle (°)
+        <input id="angle" type="number" min="15" max="90" step="1" value="45" />
+      </label>
+
+      <h3>Mitigation — Kinetic Impactor</h3>
+      <label>Impactor mass (kg)
+        <input id="impMass" type="number" value="1000" />
+      </label>
+      <label>Impactor speed (km/s)
+        <input id="impVel" type="number" value="10" step="0.1" />
+      </label>
+      <label>Momentum enhancement β
+        <input id="beta" type="number" value="1.5" step="0.1" />
+      </label>
+
+      <h3>Mitigation — Gravity Tractor</h3>
+      <label>Tractor mass (kg)
+        <input id="tractorMass" type="number" value="2000" />
+      </label>
+      <label>Stand-off (m)
+        <input id="standOff" type="number" value="500" />
+      </label>
+      <label>Tug duration (days)
+        <input id="tugDays" type="number" value="180" />
+      </label>
+
+      <button id="estimateBtn">Estimate</button>
+      <div class="note">Set <code>NASA_API_KEY</code> in your environment to use NASA endpoints.</div>
+    </section>
+
+    <section class="viz">
+      <div class="three-wrap"><canvas id="three"></canvas></div>
+      <div id="metrics" class="metrics"></div>
+    </section>
+
+    <section class="map-panel">
+      <div id="map"></div>
+      <div class="map-note">Click map to set a hypothetical impact point. Basemap © OpenStreetMap.</div>
+
+      <div class="panel" style="margin-top:8px;">
+        <h2>Defend Earth — Gamification</h2>
+        <label>Enable game mode
+          <input id="gameEnabled" type="checkbox" />
+        </label>
+
+        <label>Mission
+          <select id="missionSelect">
+            <option value="easy">Easy — City Saver</option>
+            <option value="std" selected>Standard — Country Saver</option>
+            <option value="hard">Hard — Planet Saver</option>
+          </select>
+        </label>
+
+        <label>Intercept time (days before encounter)
+          <input id="interceptDays" type="number" min="10" step="10" value="180" />
+        </label>
+        <div class="note">Toy rule: required Δv ≈ Earth radius / time to intercept.</div>
+        <div id="gameStatus" class="metrics" style="min-height: 90px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>© Asteroid Impact Lab — Pro</div>
+    <div class="right"><a href="https://api.nasa.gov/" target="_blank" rel="noreferrer">NASA APIs</a> · <a href="https://www.usgs.gov/" target="_blank" rel="noreferrer">USGS</a></div>
+  </footer>
+
+  <!-- Load local libs only (no CDN) -->
+  <script src="/static/vendor/leaflet.js"></script>
+  <script src="/static/vendor/three.min.js"></script>
+  <script>
+    // Show banner if any lib is missing
+    window.addEventListener('load', () => {
+      if (typeof L === 'undefined' || typeof THREE === 'undefined') {
+        const b = document.getElementById('banner'); if (b) b.style.display = 'block';
+      }
+    });
+  </script>
+  <script src="/app.js"></script>
+</body>
+</html>
