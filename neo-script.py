@@ -12,8 +12,8 @@ NASA_API_KEY = os.getenv("NASA_API_KEY", "SokecvLDKo2aPz6lDM3GYIQxtlGAPbUwbiziTT
 
 # Loads all objects that will come near the Earth within the next week.
 def main():
-    end_date = datetime.datetime.today().strftime("%Y-%m-%d")
-    url = f"https://api.nasa.gov/neo/rest/v1/feed?api_key={NASA_API_KEY}&end_date={end_date}"
+    start_date = datetime.datetime.today().strftime("%Y-%m-%d")
+    url = f"https://api.nasa.gov/neo/rest/v1/feed?api_key={NASA_API_KEY}&start_date={start_date}"
     r = requests.get(url, timeout=20)
     r.raise_for_status()
     data = r.json()
