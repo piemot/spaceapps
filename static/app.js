@@ -25,8 +25,10 @@ const PLANETS = [
     r: 5.0e9,
     ring: true,
   },
-  { name: "Uranus", a: 19.2, period: 84.01, color: 0x9bd4e4, r: 4.2e9 },
-  { name: "Neptune", a: 30.05, period: 164.8, color: 0x6ea7ff, r: 4.0e9 },
+  // { name: "Uranus", a: 19.2, period: 84.01, color: 0x9bd4e4, r: 4.2e9 },
+  { name: "Uranus", a: 19.2, period: 84.01, color: 0x9bd4e4, r: 1.0e10 },
+  // { name: "Neptune", a: 30.05, period: 164.8, color: 0x6ea7ff, r: 4.0e9 },
+  { name: "Neptune", a: 30.05, period: 164.8, color: 0x6ea7ff, r: 1.0e10 },
 ];
 
 const METEORS = await loadMeteors();
@@ -96,7 +98,7 @@ function buildPlanets() {
       new THREE.MeshBasicMaterial({ color: p.color }),
     );
 
-    // closed orbit ring (use your existing orbitGroup to keep things tidy)
+    // closed orbit ring
     const orbit = makeOrbitCircle(p.a * AU, p.color);
     three.orbitGroup.add(orbit);
 
@@ -160,7 +162,7 @@ function updateSolarSystem(nowMs) {
  *
  * @param {*} parameters
  * @param {number} nowDay - The current day in sim time
- * @returns {[number, number, number]}
+ * @returns {[number, number, number]} The position of the meteor
  */
 function getMeteorPosition(parameters, nowDay) {
   const elements = parameters;
@@ -218,8 +220,9 @@ function updateMeteorSystem(nowMs) {
   for (const [ind, m] of METEORS.entries()) {
     const pos = getMeteorPosition(m.parameters, tDays);
     vertices[3 * ind] = pos[0];
-    vertices[3 * ind + 1] = pos[1];
-    vertices[3 * ind + 2] = pos[2];
+    // hotfix to put meteors in-plane
+    vertices[3 * ind + 1] = pos[2];
+    vertices[3 * ind + 2] = pos[1];
   }
   // update existing geometry
   meteorPoints.geometry.setAttribute(
@@ -264,7 +267,7 @@ addStars();
 
 async function loadMeteors() {
   const meteors = [];
-  const { default: elements } = await import("/static/meteors.json", {
+  const { default: elements } = await import("/static/output.json", {
     with: { type: "json" },
   });
 
@@ -275,6 +278,11 @@ async function loadMeteors() {
         throw new Error(`non-finite element ${x}, ${a}`);
       }
       return x;
+    }
+
+    if (!elem.orbital_data) {
+      console.warn("Invalid element", elem);
+      continue;
     }
 
     meteors.push({

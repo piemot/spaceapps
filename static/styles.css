@@ -16,8 +16,10 @@ body {
     margin: 0;
     background: radial-gradient(100% 100% at 50% 0%, #0f1530, #070a14 70%);
     color: var(--text);
-    font:
-        14px/1.4 system-ui,
+
+    font-family:
+        "Exo 2",
+        system-ui,
         Segoe UI,
         Roboto,
         Helvetica,
@@ -49,4 +51,14 @@ main {
     position: absolute;
     bottom: 20;
     left: 0;
+}
+aside {
+    border-right: solid rgba(255, 255, 255, 20%) 2px;
+    height: 100%;
+}
+.header {
+    display: flex;
+    flex-direction: column;
+    place-items: center;
+    padding: 2em 0em;
 }
