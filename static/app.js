@@ -11,8 +11,8 @@ const speedSlider = document.getElementById('speed');
 const AU = 149597870700.0; // 1 AU in meters
 const muSun = 1.32712440018e20; // m^3/s^2 GM_sun
 
-let SECONDS_PER_YEAR = 50; // sim speed: 1 year = 40s
-let OFFSET = 0; // offset for SECONDS_PER_YEAR -- this will NOT work, I'm calling it
+let SecondsPerYear = 50; // sim speed: 1 year = 40s
+let OFFSET = 0; // offset for SecondsPerYear -- this will NOT work, I'm calling it
 
 let tDaysPrev = 0;
 let tYearsPrev = 0;
@@ -157,7 +157,7 @@ function buildMeteors() {
 buildMeteors();
 
 function updateSolarSystem(nowMs) {
-  const tYears = tYearsPrev + (nowMs - nowMsPrev2) / 1000 / SECONDS_PER_YEAR;
+  const tYears = tYearsPrev + (nowMs - nowMsPrev2) / 1000 / SecondsPerYear;
   for (const p of planetObjs) {
     const theta = (tYears / p.period) * Math.PI * 2; // constant angular speed (schematic)
     const x = p.a * AU * Math.cos(theta);
@@ -224,8 +224,8 @@ function getMeteorPosition(parameters, nowDay) {
 }
 
 function updateMeteorSystem(nowMs) {
-  // const tDays = nowMs / 1000 / SECONDS_PER_YEAR / 365;
-  const tDays = tDaysPrev + (nowMs - nowMsPrev1) / SECONDS_PER_YEAR;
+  // const tDays = nowMs / 1000 / SecondsPerYear / 365;
+  const tDays = tDaysPrev + (nowMs - nowMsPrev1) / SecondsPerYear;
 
   const vertices = new Float32Array(METEORS.length * 3);
   for (const [ind, m] of METEORS.entries()) {
@@ -247,8 +247,8 @@ function updateMeteorSystem(nowMs) {
 
 function animate() {
   requestAnimationFrame(animate);
-  SECONDS_PER_YEAR = 85 - parseInt(speedSlider.value);
-  console.log(SECONDS_PER_YEAR);
+  SecondsPerYear = 85 - parseInt(speedSlider.value);
+  console.log(SecondsPerYear);
   updateMeteorSystem(performance.now());
   updateSolarSystem(performance.now());
   three.renderer.render(three.scene, three.camera);
