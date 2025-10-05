@@ -3,12 +3,21 @@ import { init } from "./init.js";
 
 const three = init();
 
+// Slider input
+const speedSlider = document.getElementById('speed');
+
 // === Solar System (schematic) ===
 // Keep units in meters (your Earth ring uses meters already)
 const AU = 149597870700.0; // 1 AU in meters
 const muSun = 1.32712440018e20; // m^3/s^2 GM_sun
 
-const SECONDS_PER_YEAR = 40; // sim speed: 1 year = 40s
+let SecondsPerYear = 50; // sim speed: 1 year = 40s
+let OFFSET = 0; // offset for SecondsPerYear -- this will NOT work, I'm calling it
+
+let tDaysPrev = 0;
+let tYearsPrev = 0;
+let nowMsPrev1 = 0;
+let nowMsPrev2 = 0;
 
 // orbital period in Earth days, display radius in meters (not to scale)
 const PLANET_DATA_MATRIX = [
@@ -248,7 +257,7 @@ function buildMeteors() {
 buildMeteors();
 
 function updateSolarSystem(nowMs) {
-  const tYears = nowMs / 1000 / SECONDS_PER_YEAR;
+  const tYears = tYearsPrev + (nowMs - nowMsPrev2) / 1000 / SecondsPerYear;
   for (const p of planetObjs) {
     const theta = (tYears / p.period) * Math.PI * 2; // constant angular speed (schematic)
     const x = p.a * AU * Math.cos(theta);
@@ -256,6 +265,8 @@ function updateSolarSystem(nowMs) {
     p.mesh.position.set(x, 0, z);
     p.label.position.set(x + p.r * 2.0, p.r * 1.5, z); // offset label near planet
   }
+  nowMsPrev2 = nowMs;
+  tYearsPrev = tYears;
 }
 /**
  * @typedef {object} CelestialObjectParams
@@ -323,8 +334,8 @@ function getCelestialObjectPosition(parameters, nowDay) {
 }
 
 function updateMeteorSystem(nowMs) {
-  // const tDays = nowMs / 1000 / SECONDS_PER_YEAR / 365;
-  const tDays = nowMs / SECONDS_PER_YEAR;
+  // const tDays = nowMs / 1000 / SecondsPerYear / 365;
+  const tDays = tDaysPrev + (nowMs - nowMsPrev1) / SecondsPerYear;
 
   const vertices = new Float32Array(METEORS.length * 3);
   for (const [ind, m] of METEORS.entries()) {
@@ -340,11 +351,14 @@ function updateMeteorSystem(nowMs) {
     new THREE.BufferAttribute(vertices, 3),
   );
   meteorPoints.geometry.attributes.position.needsUpdate = true;
+  tDaysPrev = tDays;
+  nowMsPrev1 = nowMs;
 }
 
 function animate() {
   requestAnimationFrame(animate);
-
+  SecondsPerYear = 85 - parseInt(speedSlider.value);
+  console.log(SecondsPerYear);
   updateMeteorSystem(performance.now());
   updateSolarSystem(performance.now());
   three.renderer.render(three.scene, three.camera);
@@ -377,7 +391,7 @@ addStars();
 
 async function loadMeteors() {
   const meteors = [];
-  const { default: elements } = await import("/static/output.json", {
+  const { default: elements } = await import("/static/meteors.json", {
     with: { type: "json" },
   });
 
