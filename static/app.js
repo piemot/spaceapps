@@ -19,62 +19,151 @@ let tYearsPrev = 0;
 let nowMsPrev1 = 0;
 let nowMsPrev2 = 0;
 
-// Semi-major axis in AU, orbital period in Earth years, display radius in meters (not to scale)
-const PLANETS = [
-  { name: "Mercury", a: 0.39, period: 0.241, color: 0xb1b1b1, r: 2.0e9 },
-  { name: "Venus", a: 0.72, period: 0.615, color: 0xeed9a3, r: 3.0e9 },
-  { name: "Earth", a: 1, period: 1, color: 0xaaffaa, r: 3.0e9 },
-  { name: "Mars", a: 1.52, period: 1.881, color: 0xff7b55, r: 2.6e9 },
-  { name: "Jupiter", a: 5.2, period: 11.86, color: 0xd8b48a, r: 6.0e9 },
+// orbital period in Earth days, display radius in meters (not to scale)
+const PLANET_DATA_MATRIX = [
+  {
+    name: "Mercury",
+    color: 0xb1b1b1,
+    displayRadius: 2.0e9,
+    orbitalPeriod: 88,
+    base: [
+      0.38709927, 0.20563593, 7.00497902, 252.2503235, 77.45779628, 48.33076593,
+    ],
+    modifier: [
+      0.00000037, 0.00001906, -0.00594749, 149472.67411175, 0.16047689,
+      -0.12534081,
+    ],
+  },
+  {
+    name: "Venus",
+    color: 0xeed9a3,
+    displayRadius: 3.0e9,
+    orbitalPeriod: 225,
+    base: [
+      0.72333566, 0.00677672, 3.39467605, 181.9790995, 131.60246718,
+      76.67984255,
+    ],
+    modifier: [
+      0.0000039, -0.00004107, -0.0007889, 58517.81538729, 0.00268329,
+      -0.27769418,
+    ],
+  },
+  {
+    name: "EM Bary",
+    color: 0x46be46,
+    displayRadius: 3.0e9,
+    orbitalPeriod: 365,
+    base: [
+      1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0,
+    ],
+    modifier: [
+      0.00000562, -0.00004392, -0.01294668, 35999.37244981, 0.32327364, 0.0,
+    ],
+  },
+  {
+    name: "Mars",
+    color: 0xff7b55,
+    displayRadius: 2.6e9,
+    orbitalPeriod: 687,
+    base: [
+      1.52371034, 0.0933941, 1.84969142, -4.55343205, -23.94362959, 49.55953891,
+    ],
+    modifier: [
+      0.00001847, 0.00007882, -0.00813131, 19140.30268499, 0.44441088,
+      -0.29257343,
+    ],
+  },
+  {
+    name: "Jupiter",
+    color: 0xd8b48a,
+    displayRadius: 6.0e9,
+    orbitalPeriod: 4333,
+    base: [
+      5.202887, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909,
+    ],
+    modifier: [
+      -0.00011607, -0.00013253, -0.00183714, 3034.74612775, 0.21252668,
+      0.20469106,
+    ],
+  },
   {
     name: "Saturn",
-    a: 9.58,
-    period: 29.46,
     color: 0xf2df9b,
-    r: 5.0e9,
-    ring: true,
+    displayRadius: 5.0e9,
+    orbitalPeriod: 10759,
+    base: [
+      9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831,
+      113.66242448,
+    ],
+    modifier: [
+      -0.0012506, -0.00050991, 0.00193609, 1222.49362201, -0.41897216,
+      -0.28867794,
+    ],
   },
-  // { name: "Uranus", a: 19.2, period: 84.01, color: 0x9bd4e4, r: 4.2e9 },
-  { name: "Uranus", a: 19.2, period: 84.01, color: 0x9bd4e4, r: 1.0e10 },
-  // { name: "Neptune", a: 30.05, period: 164.8, color: 0x6ea7ff, r: 4.0e9 },
-  { name: "Neptune", a: 30.05, period: 164.8, color: 0x6ea7ff, r: 1.0e10 },
+  {
+    name: "Uranus",
+    color: 0x9bd4e4,
+    displayRadius: 1.0e10,
+    orbitalPeriod: 30687,
+    base: [
+      19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.9542763,
+      74.01692503,
+    ],
+    modifier: [
+      -0.00196176, -0.00004397, -0.00242939, 428.48202785, 0.40805281,
+      0.04240589,
+    ],
+  },
+  {
+    name: "Neptune",
+    color: 0x6ea7ff,
+    displayRadius: 1.0e10,
+    orbitalPeriod: 60190,
+    base: [
+      30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227,
+      131.78422574,
+    ],
+    modifier: [
+      0.00026291, 0.00005105, 0.00035372, 218.45945325, -0.32241464,
+      -0.00508664,
+    ],
+  },
 ];
 
-const METEORS = await loadMeteors();
+const PLANETS = [];
+for (const planet of PLANET_DATA_MATRIX) {
+  /* The number of centuries past J2000 */
+  const j2000centuries = (new Date().getFullYear() % 100) / 100;
+  const value = (base, modifier) => base + j2000centuries * modifier;
 
-// Closed circular orbit in the XZ-plane (schematic)
-function makeOrbitCircle(radiusMeters, color = 0x2aff7a) {
-  const segments = 512;
-  const positions = new Float32Array(segments * 3);
-  for (let i = 0; i < segments; i++) {
-    const th = (i / segments) * Math.PI * 2;
-    positions[3 * i] = radiusMeters * Math.cos(th);
-    positions[3 * i + 1] = 0;
-    positions[3 * i + 2] = radiusMeters * Math.sin(th);
-  }
-  const geom = new THREE.BufferGeometry();
-  geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const mat = new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: 0.8,
-  });
-  return new THREE.LineLoop(geom, mat);
+  const a_AU = value(planet.base[0], planet.modifier[0]); // semi-major axis
+  const e = value(planet.base[1], planet.modifier[1]); // eccentricity (already provided in rad)
+  const i_deg = value(planet.base[2], planet.modifier[2]); // inclination
+  const L_deg = value(planet.base[3], planet.modifier[3]); // mean longitude
+  const pi_deg = value(planet.base[4], planet.modifier[4]); // longitude of perihelion
+  const Omega_deg = value(planet.base[5], planet.modifier[5]); // longitude of the ascending node
+
+  const omega_deg = pi_deg - Omega_deg; // argument of perihelion
+  const M_deg = L_deg - pi_deg; // mean anomaly
+
+  PLANETS.push({ ...planet, a_AU, e, i_deg, Omega_deg, omega_deg, M_deg });
 }
+
+const METEORS = await loadMeteors();
 
 // Simple billboard label with adjustable size
 function makeLabel(text, scale = 1) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   const fontSize = 48;
-  ctx.font = `${fontSize}px sans-serif`;
+  ctx.font = `${fontSize}px 'Exo 2', sans-serif`;
   const w = Math.max(256, ctx.measureText(text).width + 40);
   const h = 128;
   canvas.width = w;
   canvas.height = h;
 
   const g = canvas.getContext("2d");
-  g.font = `${fontSize}px sans-serif`;
+  g.font = `${fontSize}px 'Exo 2', sans-serif`;
   g.fillStyle = "rgba(255,255,255,0.9)";
   g.textAlign = "center";
   g.textBaseline = "middle";
@@ -98,39 +187,50 @@ function makeLabel(text, scale = 1) {
 const planetObjs = [];
 let meteorPoints = null;
 
+/**
+ * Closed eliptical orbit in the XZ-plane
+ *
+ * @param {CelestialObjectParams} params
+ * @param {number} color
+ * @returns
+ */
+function makeOrbitPath(params, color = 0x2aff7a) {
+  console.log(params.name, params.orbitalPeriod);
+
+  const positions = new Float32Array(params.orbitalPeriod * 3);
+  for (let i = 0; i < params.orbitalPeriod; i++) {
+    const px = getCelestialObjectPosition(params, i);
+    positions[3 * i] = px[0];
+    // hotfix to put orbits in-plane
+    positions[3 * i + 1] = px[2];
+    positions[3 * i + 2] = px[1];
+  }
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.8,
+  });
+  return new THREE.LineLoop(geom, mat);
+}
+
 // Create planets, orbit rings, and labels
 function buildPlanets() {
   for (const p of PLANETS) {
     // planet body
     const body = new THREE.Mesh(
-      new THREE.SphereGeometry(p.r, 24, 24),
+      new THREE.SphereGeometry(p.displayRadius, 24, 24),
       new THREE.MeshBasicMaterial({ color: p.color }),
     );
 
     // closed orbit ring
-    const orbit = makeOrbitCircle(p.a * AU, p.color);
+    const orbit = makeOrbitPath(p, p.color);
     three.orbitGroup.add(orbit);
 
     // label
     const label = makeLabel(p.name);
     three.scene.add(body, label);
-
-    // --- Saturn's ring (schematic) ---
-    if (p.ring) {
-      const R_outer = p.r * 2.2; // outer radius
-      const R_inner = p.r * 1.2; // inner radius
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(R_inner, R_outer, 64),
-        new THREE.MeshBasicMaterial({
-          color: 0xf6eec2,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.7,
-        }),
-      );
-      ring.rotation.x = Math.PI / 2; // lay flat in XZ-plane
-      body.add(ring); // parent to the planet mesh
-    }
 
     planetObjs.push({ ...p, mesh: body, label });
   }
@@ -168,14 +268,23 @@ function updateSolarSystem(nowMs) {
   nowMsPrev2 = nowMs;
   tYearsPrev = tYears;
 }
+/**
+ * @typedef {object} CelestialObjectParams
+ * @property {number} a_AU - The length of the semi-major axis in AU
+ * @property {number} e - The eccentricity of the orbit in radians
+ * @property {number} i_deg - The inclination of the orbit in degrees
+ * @property {number} Omega_deg - The ascending node longitude of the orbit in degrees
+ * @property {number} omega_deg - The perihelion argument of the orbit in degrees
+ * @property {number} M_deg - The mean anomaly of the orbit in degrees
+ */
 
 /**
  *
- * @param {*} parameters
- * @param {number} nowDay - The current day in sim time
- * @returns {[number, number, number]} The position of the meteor
+ * @param {CelestialObjectParams} parameters
+ * @param {number} nowDay
+ * @returns {[number, number, number]} The coordinates of the object
  */
-function getMeteorPosition(parameters, nowDay) {
+function getCelestialObjectPosition(parameters, nowDay) {
   const elements = parameters;
 
   const a = elements.a_AU * AU;
@@ -216,6 +325,7 @@ function getMeteorPosition(parameters, nowDay) {
   const R32 = cosw * sini;
   const R33 = cosi;
 
+  // z_p = 0
   const x = R11 * x_p + R12 * y_p + R13 * 0;
   const y = R21 * x_p + R22 * y_p + R23 * 0;
   const z = R31 * x_p + R32 * y_p + R33 * 0;
@@ -229,7 +339,7 @@ function updateMeteorSystem(nowMs) {
 
   const vertices = new Float32Array(METEORS.length * 3);
   for (const [ind, m] of METEORS.entries()) {
-    const pos = getMeteorPosition(m.parameters, tDays);
+    const pos = getCelestialObjectPosition(m.parameters, tDays);
     vertices[3 * ind] = pos[0];
     // hotfix to put meteors in-plane
     vertices[3 * ind + 1] = pos[2];
