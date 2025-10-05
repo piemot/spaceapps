@@ -61,4 +61,10 @@ aside {
     flex-direction: column;
     place-items: center;
     padding: 2em 0em;
+    gap: 2em;
+}
+aside form {
+    display: flex;
+    flex-direction: column;
+    place-items: center;
 }
