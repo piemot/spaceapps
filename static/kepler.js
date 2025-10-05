@@ -35,19 +35,9 @@ const muSun = 1.32712440018e20; // m^3/s^2 GM_sun
  */
 function processEvent(event) {
   try {
-    console.debug("orbits", event.data.orbits);
     const positions = event.data.orbits.map(producePositions);
-    // Simple Earth orbit for context (1 AU approx, small e)
-    const earth = [];
-    const aE = AU;
-    const eE = 0.0167;
-    for (let k = 0; k < 360; k += 3) {
-      const th = (k * Math.PI) / 180;
-      const rE = (aE * (1 - eE * eE)) / (1 + eE * Math.cos(th));
-      earth.push([rE * Math.cos(th), rE * Math.sin(th), 0]);
-    }
 
-    self.postMessage({ positions, earth });
+    self.postMessage({ positions });
   } catch (e) {
     self.postMessage({ error: String(e) });
   }
@@ -57,7 +47,6 @@ function processEvent(event) {
  * @param {Orbit} orbit
  */
 function producePositions(orbit) {
-  console.debug("positions for orbit", orbit);
   const elements = orbit.parameters;
 
   const a = elements.a_AU * AU;
@@ -107,7 +96,6 @@ function producePositions(orbit) {
 
     positions.push([x, y, z]);
   }
-  console.debug("position 1", positions[0]);
   return positions;
 }
 
