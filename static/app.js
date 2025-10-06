@@ -4,7 +4,7 @@ import { init } from "./init.js";
 const three = init();
 
 // Slider input
-const speedSlider = document.getElementById('speed');
+const speedSlider = document.getElementById("speed");
 
 // === Solar System (schematic) ===
 // Keep units in meters (your Earth ring uses meters already)
@@ -242,13 +242,24 @@ function buildMeteors() {
 
   const geometry = new THREE.BufferGeometry();
   const vertices = new Float32Array(METEORS.length * 3);
+  const colors = new Float32Array(METEORS.length * 3);
+
+  const color = new THREE.Color();
+  color.setHex(0xc4a484);
+  for (let i = 0; i < METEORS.length; i++) {
+    colors[3 * i] = color.r;
+    colors[3 * i + 1] = color.g;
+    colors[3 * i + 2] = color.b;
+  }
+
   geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
   const material = new THREE.PointsMaterial({
-    color: 0xc4a484,
     size: 1e10,
     map: sprite,
     transparent: true,
+    vertexColors: true,
   });
 
   meteorPoints = new THREE.Points(geometry, material);
@@ -257,16 +268,18 @@ function buildMeteors() {
 buildMeteors();
 
 function updateSolarSystem(nowMs) {
-  const tYears = tYearsPrev + (nowMs - nowMsPrev2) / 1000 / SecondsPerYear;
+  const tDays = tDaysPrev + (nowMs - nowMsPrev2) / SecondsPerYear;
   for (const p of planetObjs) {
-    const theta = (tYears / p.period) * Math.PI * 2; // constant angular speed (schematic)
-    const x = p.a * AU * Math.cos(theta);
-    const z = p.a * AU * Math.sin(theta);
-    p.mesh.position.set(x, 0, z);
-    p.label.position.set(x + p.r * 2.0, p.r * 1.5, z); // offset label near planet
+    const [x, y, z] = getCelestialObjectPosition(p, tDays);
+    p.mesh.position.set(x, z, y);
+    p.label.position.set(
+      x + p.orbitalRadius * 3.0,
+      z,
+      y + p.orbitalRadius * 1.75,
+    ); // offset label near planet
   }
   nowMsPrev2 = nowMs;
-  tYearsPrev = tYears;
+  tDaysPrev = tDays;
 }
 /**
  * @typedef {object} CelestialObjectParams
@@ -334,23 +347,56 @@ function getCelestialObjectPosition(parameters, nowDay) {
 }
 
 function updateMeteorSystem(nowMs) {
-  // const tDays = nowMs / 1000 / SecondsPerYear / 365;
+  const list = document.getElementById("list-close");
+  list.innerHTML = "";
   const tDays = tDaysPrev + (nowMs - nowMsPrev1) / SecondsPerYear;
 
   const vertices = new Float32Array(METEORS.length * 3);
+  const colors = new Float32Array(METEORS.length * 3);
+
+  const color = new THREE.Color();
   for (const [ind, m] of METEORS.entries()) {
     const pos = getCelestialObjectPosition(m.parameters, tDays);
     vertices[3 * ind] = pos[0];
     // hotfix to put meteors in-plane
     vertices[3 * ind + 1] = pos[2];
     vertices[3 * ind + 2] = pos[1];
+
+    const earthPos = getCelestialObjectPosition(planetObjs[2], tDays);
+
+    // determine whether the meteor is near the Earth
+    const isClose =
+      Math.sqrt(
+        (pos[0] - earthPos[0]) ** 2 +
+          (pos[1] - earthPos[1]) ** 2 +
+          (pos[2] - earthPos[2]) ** 2,
+      ) < 5e10;
+    color.setHex(isClose ? 0xff7755 : 0xc4a484);
+    if (isClose) {
+      if (list.innerHTML.length < 200) {
+        const e = document.createElement("li");
+        e.textContent = m.name;
+        list.appendChild(e);
+      }
+    }
+
+    colors[3 * ind] = color.r;
+    colors[3 * ind + 1] = color.g;
+    colors[3 * ind + 2] = color.b;
   }
+
   // update existing geometry
   meteorPoints.geometry.setAttribute(
     "position",
     new THREE.BufferAttribute(vertices, 3),
   );
+  meteorPoints.geometry.setAttribute(
+    "color",
+    new THREE.BufferAttribute(colors, 3),
+  );
   meteorPoints.geometry.attributes.position.needsUpdate = true;
+  meteorPoints.geometry.attributes.color.needsUpdate = true;
+
   tDaysPrev = tDays;
   nowMsPrev1 = nowMs;
 }
@@ -391,9 +437,16 @@ addStars();
 
 async function loadMeteors() {
   const meteors = [];
-  const { default: elements } = await import("/static/meteors.json", {
+  const { default: elements } = await import("/static/stress.json", {
     with: { type: "json" },
   });
+
+  const list = document.getElementById("list");
+  for (const elem of elements.slice(0, 100)) {
+    const e = document.createElement("li");
+    e.textContent = elem.name;
+    list.appendChild(e);
+  }
 
   for (const elem of elements) {
     function getFinite(a) {

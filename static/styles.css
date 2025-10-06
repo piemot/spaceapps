@@ -54,7 +54,8 @@ main {
 }
 aside {
     border-right: solid rgba(255, 255, 255, 20%) 2px;
-    height: 100%;
+    height: 100vh;
+    overflow-y: scroll;
 }
 .header {
     display: flex;
@@ -63,8 +64,27 @@ aside {
     padding: 2em 0em;
     gap: 2em;
 }
+
+.header .label {
+    display: flex;
+    flex-direction: column;
+    place-items: center;
+}
 aside form {
     display: flex;
     flex-direction: column;
     place-items: center;
+}
+
+#list,
+#list-close {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    list-style-type: square;
+}
+#list li:hover,
+#list-close li:hover {
+    font-weight: bold;
 }
